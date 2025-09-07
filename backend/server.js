@@ -1,4 +1,3 @@
-// backend/server.js
 import express from "express";
 import session from "express-session";
 import cookieParser from "cookie-parser";
@@ -12,21 +11,16 @@ dotenv.config(); // load .env file
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
-// app.use(cors({
-//   origin: "http://localhost:3000",
-//   credentials: true
-// }));
-const allowedOrigins = ["http://localhost:3000", "https://klickks-frontend-4sir.vercel.app"];
+// ✅ CORS setup
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://klickks-frontend-4sir.vercel.app"
+];
+
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error("Not allowed by CORS"));
-  },
+  origin: allowedOrigins,
   credentials: true
 }));
-
-
 
 app.use(express.json());
 app.use(cookieParser());
@@ -34,19 +28,26 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "default_secret",
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // true if using HTTPS
+  cookie: { 
+    secure: process.env.NODE_ENV === "production", // true in HTTPS
+    sameSite: "lax"
+  }
 }));
 
-//  Root test route
+// ✅ Root test route
 app.get("/", (req, res) => {
-  res.send(" API is working...");
+  res.send("API root is working 🚀");
 });
 
+// ✅ Extra health check
+app.get("/api", (req, res) => {
+  res.json({ status: "API is working", version: "1.0.0" });
+});
 
-// Routes
+// ✅ Auth routes
 app.use("/api/auth", authRoutes);
 
-// Init DB and start server
+// ✅ Init DB and start server
 initDb().then(() => {
   app.listen(PORT, () => console.log(`✅ Backend running at http://localhost:${PORT}`));
 });
